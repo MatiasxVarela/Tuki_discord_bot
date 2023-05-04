@@ -1,9 +1,7 @@
 package messages
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"bot/discord/services"
 	"os"
 	"strings"
 
@@ -11,8 +9,6 @@ import (
 )
 
 func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-
-	CAT_API := os.Getenv("CAT_API")
 
 	if strings.HasPrefix(m.Content, ":milei") {
 		file, _ := os.Open("./assets/244081852_10158638416964891_8635652479027886497_n.jpg")
@@ -28,33 +24,14 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if strings.HasPrefix(m.Content, ":cat") {
 
-		res, err := http.Get("https://api.thecatapi.com/v1/images/search?api_key=" + CAT_API)
+		catPic, err := services.GetRandomCat()
 		if err != nil {
-			s.ChannelMessage(m.ChannelID, "Error en la petición")
+			s.ChannelMessage(m.ChannelID, "Error al obtener la imagen de gato")
+			return
 		}
-		defer res.Body.Close()
+		defer catPic.Close()
 
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			s.ChannelMessage(m.ChannelID, "Error en la petición")
-		}
-
-		var data []map[string]interface{}
-		err = json.Unmarshal(body, &data)
-		if err != nil {
-			s.ChannelMessage(m.ChannelID, "Error en la petición")
-		}
-
-		url := data[0]["url"].(string)
-		res, err = http.Get(url)
-		if err != nil {
-			s.ChannelMessage(m.ChannelID, "Error en la petición")
-		}
-
-		defer res.Body.Close()
-
-		s.ChannelFileSend(m.ChannelID, "gato.jpg", res.Body)
-
+		s.ChannelFileSend(m.ChannelID, "gato.jpg", catPic)
 	}
 
 }
